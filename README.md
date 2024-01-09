@@ -14,7 +14,7 @@ Simulated arbitrage attempts are saved in a MongoDB database by default, for dea
 
 ## ⚠️ limitations ⚠️
 
-Retrospect is still in development, and is not stable. If you find a bug, please [open an issue](https://github.com/zeroXbrock/Retrospect/issues).
+Retrospect is still in development, and is not stable. If you find a bug, please [open an issue](https://github.com/0xmelvin/Retrospect/issues).
 
 This project is an experiment. The profits estimated by this system are by no means definitive; they more accurately represent a **lower bound** for the total addressable MEV on MEV-Share. With more complex strategies and more exchanges supported, total profits which could be realized on MEV-Share should far exceed those which are estimated by this system.
 
