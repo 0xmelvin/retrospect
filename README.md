@@ -1,13 +1,12 @@
-# Hindsight
+# Retrospect
 
 <!-- show ./header-img.png -->
-![hindsight visual algorithm](header-img.png)
 
-_Hindsight is an arbitrage simulator written in Rust which estimates the historical value of (Uniswap) MEV from Flashbots MEV-Share events._
+_Retrospect is an arbitrage simulator written in Rust which estimates the historical value of (Uniswap) MEV from Flashbots MEV-Share events._
 
 The simulation core uses [revm](https://github.com/bluealloy/revm) to simulate arbs locally by first getting state diffs from an Ethereum archive node that supports the `trace_callMany` API (see [requirements](#requirements) for node recommendations).
 
-> Just a warning: ⚠️ running Hindsight on a hosted node may require a high rate limit, which can be expensive.
+> Just a warning: ⚠️ running Retrospect on a hosted node may require a high rate limit, which can be expensive.
 
 The arbitrage strategy implemented here is a relatively simple two-step arb: after simulating the user's trade, we simulate swapping WETH for tokens on the exchange with the best rate (with the user's trade accounted for) and then simulate selling them on whichever other supported exchange gives us the best rate. Currently, Uniswap V2/V3 and SushiSwap are supported. More exchanges may be added to improve odds of profitability.
 
@@ -15,7 +14,7 @@ Simulated arbitrage attempts are saved in a MongoDB database by default, for dea
 
 ## ⚠️ limitations ⚠️
 
-Hindsight is still in development, and is not stable. If you find a bug, please [open an issue](https://github.com/zeroXbrock/hindsight/issues).
+Retrospect is still in development, and is not stable. If you find a bug, please [open an issue](https://github.com/zeroXbrock/Retrospect/issues).
 
 This project is an experiment. The profits estimated by this system are by no means definitive; they more accurately represent a **lower bound** for the total addressable MEV on MEV-Share. With more complex strategies and more exchanges supported, total profits which could be realized on MEV-Share should far exceed those which are estimated by this system.
 
@@ -32,13 +31,13 @@ The system (the `scan` command specifically) is set up to retry indefinitely whe
 Make sure to clone the repo with `--recurse-submodules`. At least for now, we depend on a specific commit of rusty-sando, for its very-useful ForkDB.
 
 ```bash
-git clone --recurse-submodules https://github.com/flashbots/hindsight
+git clone --recurse-submodules https://github.com/flashbots/Retrospect
 ```
 
 or if you already cloned without recursing submodules:
 
 ```bash
-# in hindsight/
+# in Retrospect/
 git submodule update --init
 ```
 
@@ -71,7 +70,7 @@ cp .env.example .env
 vim .env
 ```
 
-The values present in `.env.example` will work if you run hindsight locally, but if you're using docker, you'll have to change the values to reflect the host in the context of the container.
+The values present in `.env.example` will work if you run Retrospect locally, but if you're using docker, you'll have to change the values to reflect the host in the context of the container.
 
 With the DB and Ethereum RPC accessible on the host machine:
 
@@ -102,7 +101,7 @@ export MONGO_URL=mongodb://root:example@localhost:27017
 export POSTGRES_URL=postgres://postgres:adminPassword@localhost:5432
 cargo run -- scan
 
-# alternatively, to pass the variables directly to hindsight rather than setting them in the shell
+# alternatively, to pass the variables directly to Retrospect rather than setting them in the shell
 RPC_URL_WS=ws://127.0.0.1:8545 \
 MONGO_URL=mongodb://root:example@localhost:27017 \
 POSTGRES_URL=postgres://postgres:adminPassword@localhost:5432 \
@@ -156,17 +155,17 @@ cargo build
 cargo run -- --help
 
 # or run the binary directly
-./target/debug/hindsight --help
+./target/debug/Retrospect --help
 ```
 
 **With Docker:**
 
 ```sh
-docker build -t hindsight .
-docker run -it -e RPC_URL_WS=ws://host.docker.internal:8545 -e MONGO_URL=mongodb://host.docker.internal:27017 hindsight --help
+docker build -t Retrospect .
+docker run -it -e RPC_URL_WS=ws://host.docker.internal:8545 -e MONGO_URL=mongodb://host.docker.internal:27017 Retrospect --help
 ```
 
-> :information_source: From this point on, I'll use `hindsight` to refer to whichever method you choose to run the program. So `hindsight scan --help` would translate to `cargo run -- scan --help` or `docker run -it hindsight --help` or `./target/debug/hindsight --help`.
+> :information_source: From this point on, I'll use `Retrospect` to refer to whichever method you choose to run the program. So `Retrospect scan --help` would translate to `cargo run -- scan --help` or `docker run -it Retrospect --help` or `./target/debug/Retrospect --help`.
 
 ### (optional) test
 
@@ -180,15 +179,15 @@ cargo test
 
 ## `scan`
 
-The `scan` command is the heart of Hindsight. It scans events from the MEV-Share Event History API, then fetches the full transactions of those events from the blockchain to use in simulations. The system then forks the blockchain at the block in which each transaction landed, and runs an [arbitrarily](./src/sim/core.rs#L28)-[juiced quadratic search](https://research.ijcaonline.org/volume65/number14/pxc3886165.pdf) to find the optimal amount of WETH to execute a backrun-arbitrage. The results are then saved to the database.
+The `scan` command is the heart of Retrospect. It scans events from the MEV-Share Event History API, then fetches the full transactions of those events from the blockchain to use in simulations. The system then forks the blockchain at the block in which each transaction landed, and runs an [arbitrarily](./src/sim/core.rs#L28)-[juiced quadratic search](https://research.ijcaonline.org/volume65/number14/pxc3886165.pdf) to find the optimal amount of WETH to execute a backrun-arbitrage. The results are then saved to the database.
 
 To scan the last week's events for arbs:
 
 ```sh
-hindsight scan -t $(echo "$(date +%s) - (86400 * 7)" | bc)
+Retrospect scan -t $(echo "$(date +%s) - (86400 * 7)" | bc)
 
 # or if you don't have `bc` and can accept these ugly parenthesis
-hindsight scan -t $(echo $(($(date +%s) - ((86400 * 7)))))
+Retrospect scan -t $(echo $(($(date +%s) - ((86400 * 7)))))
 ```
 
 The timestamp arguments accept unix-style integer timestamps, represented in seconds.
@@ -200,28 +199,28 @@ The `export` command is a simple way to filter and export results from the datab
 To export arbs for events from the last week:
 
 ```sh
-hindsight export -t $(echo "$(date +%s) - (86400 * 7)" | bc)
+Retrospect export -t $(echo "$(date +%s) - (86400 * 7)" | bc)
 
 # or
-hindsight export -t $(echo $(($(date +%s) - ((86400 * 7)))))
+Retrospect export -t $(echo $(($(date +%s) - ((86400 * 7)))))
 ```
 
 To filter out unprofitable results:
 
 ```sh
 # only export arbs that returned a profit of at least 0.0001 WETH
-hindsight export -p 0.0001
+Retrospect export -p 0.0001
 ```
 
 ### exporting with docker
 
-Hindsight exports all files into a directory `./arbData`, relative to wherever the program is executed. To get these files out of the docker container and on to your host machine, you'll need to map the volume to a local directory.
+Retrospect exports all files into a directory `./arbData`, relative to wherever the program is executed. To get these files out of the docker container and on to your host machine, you'll need to map the volume to a local directory.
 
 In the directory where you want to put the files (we make an `arbData` directory but you don't have to):
 
 ```sh
 mkdir -p arbData
-docker run -it -v $(pwd)/arbData:/app/arbData -e RPC_URL_WS=ws://host.docker.internal:8545 -e MONGO_URL=mongodb://host.docker.internal:27017 hindsight export -p 0.0001
+docker run -it -v $(pwd)/arbData:/app/arbData -e RPC_URL_WS=ws://host.docker.internal:8545 -e MONGO_URL=mongodb://host.docker.internal:27017 Retrospect export -p 0.0001
 ```
 
 ## common errors
@@ -245,7 +244,7 @@ Alternatively, you can run the `scan` command with less parallel operations:
 
 ```sh
 # only process two txs at a time
-hindsight scan -n 2
+Retrospect scan -n 2
 ```
 
 ### Error: Kind: Server selection timeout: No available servers
@@ -282,7 +281,7 @@ If that doesn't work, try double-checking your URLs. Refer back to the [environm
 
 ## future improvements
 
-See [issues](https://github.com/flashbots/hindsight/issues) for the most up-to-date status, or to propose an improvement!
+See [issues](https://github.com/flashbots/Retrospect/issues) for the most up-to-date status, or to propose an improvement!
 
 - [ ] support all the fields in postgres, then make postgres the default
 - [ ] replace [ForkDB dependency](./src/sim/core.rs#L22-L23) (possibly with [Arbiter](https://github.com/primitivefinance/arbiter))
